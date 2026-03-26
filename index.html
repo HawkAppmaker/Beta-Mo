@@ -1,0 +1,21 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { NextResponse } from "next/server";
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+
+export async function POST(req: Request) {
+  try {
+    const { task } = await req.json();
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const prompt = `Break the following task into exactly 5 tiny, non-threatening physical movements for someone with zero energy. Focus on somatic actions like 'stand,' 'reach,' or 'touch.' Task: "${task}"`;
+
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    const steps = text.split('\n').filter(line => line.trim()).slice(0, 5);
+
+    return NextResponse.json({ steps });
+  } catch (error) {
+    return NextResponse.json({ error: "System Offline" }, { status: 500 });
+  }
+}
